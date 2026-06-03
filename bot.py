@@ -1,5 +1,6 @@
 import os
 import logging
+import asyncio
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 
@@ -39,8 +40,7 @@ async def count_words(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Format the response message
     response = (
-        "📊 **Text Analytics:**\n"
-        "---"
+        "📊 **Text Analytics:**\n\n"
         f"📝 **Words:** {word_count}\n"
         f"🔤 **Characters (with spaces):** {char_with_spaces}\n"
         f"🚫 **Characters (no spaces):** {char_no_spaces}\n"
@@ -49,20 +49,34 @@ async def count_words(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await update.message.reply_text(response, parse_mode="Markdown")
 
-if __name__ == '__main__':
+async def main():
     # Retrieve the token safely from Render's environment variables
     BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
     
     if not BOT_TOKEN:
         print("Error: TELEGRAM_BOT_TOKEN environment variable not found.")
-        exit(1)
+        return
         
-    # Build and start the bot application
+    # Build the bot application inside the active async environment
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, count_words))
     
-    print("Y_wordcounterbot is running...")
-    # drop_pending_updates prevents the bot from answering old piled up queries upon restarting
-    app.run_polling(drop_pending_updates=True)
+    print("Y_wordcounterbot is running successfully...")
+    
+    # Initialize and start polling cleanly for Render Background Workers
+    await app.initialize()
+    await app.updater.start_polling(drop_pending_updates=True)
+    await app.start()
+    
+    # Keep the async worker alive indefinitely
+    while True:
+        await asyncio.sleep(3600)
+
+if __name__ == '__main__':
+    # Force Python 3.14 to create and manage a clean event loop context
+    try:
+        asyncio.run(main())
+    except (KeyboardInterrupt, SystemExit):
+        print("Bot stopped cleanly.")
