@@ -13,11 +13,11 @@ logging.basicConfig(
 # /start command handler
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     welcome_text = (
-        "👋 Welcome to **Y_wordcounterbot**!\n\n"
+        "👋 <b>Welcome to Y_wordcounterbot!</b>\n\n"
         "Send or forward me any text message, and I will instantly "
         "provide you with the word count, character counts, and estimated reading time."
     )
-    await update.message.reply_text(welcome_text, parse_mode="Markdown")
+    await update.message.reply_html(welcome_text)
 
 # Core text analysis logic
 async def count_words(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -30,7 +30,6 @@ async def count_words(update: Update, context: ContextTypes.DEFAULT_TYPE):
     char_no_spaces = len(text.replace(" ", "").replace("\n", ""))
     
     # Estimate reading time (Average human reads ~200 words per minute)
-    # WPM reading time formula: Minutes = Words / 200
     reading_time_seconds = round((word_count / 200) * 60)
     
     if reading_time_seconds < 60:
@@ -38,16 +37,16 @@ async def count_words(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         read_time_str = f"{round(reading_time_seconds / 60, 1)} minute(s)"
 
-    # Format the response message
+    # Format the response message using safe HTML tags
     response = (
-        "📊 **Text Analytics:**\n\n"
-        f"📝 **Words:** {word_count}\n"
-        f"🔤 **Characters (with spaces):** {char_with_spaces}\n"
-        f"🚫 **Characters (no spaces):** {char_no_spaces}\n"
-        f"⏱️ **Estimated Reading Time:** {read_time_str}"
+        "📊 <b>Text Analytics:</b>\n\n"
+        f"📝 <b>Words:</b> {word_count}\n"
+        f"🔤 <b>Characters (with spaces):</b> {char_with_spaces}\n"
+        f"🚫 <b>Characters (no spaces):</b> {char_no_spaces}\n"
+        f"⏱️ <b>Estimated Reading Time:</b> {read_time_str}"
     )
     
-    await update.message.reply_text(response, parse_mode="Markdown")
+    await update.message.reply_html(response)
 
 async def main():
     # Retrieve the token safely from Render's environment variables
@@ -75,7 +74,7 @@ async def main():
         await asyncio.sleep(3600)
 
 if __name__ == '__main__':
-    # Force Python 3.14 to create and manage a clean event loop context
+    # Force Python to create and manage a clean event loop context
     try:
         asyncio.run(main())
     except (KeyboardInterrupt, SystemExit):
