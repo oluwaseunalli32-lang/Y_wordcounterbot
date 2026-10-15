@@ -1,3 +1,4 @@
+import asyncio
 import os
 import logging
 from telegram import Update, InlineQueryResultArticle, InputTextMessageContent
@@ -22,10 +23,11 @@ def calculate_stats(text: str):
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
+    bot_username = context.bot.username
     welcome_text = (
         f"Hello {user.first_name}! 👋\n\n"
         "I am your **Word Counter Bot**. Send me any text, or use me in **Inline Mode** ("
-        f"`@{context.bot.username} <your text>`) in any chat to instantly count words, characters, paragraphs, and reading time!\n\n"
+        f"`@{bot_username} <your text>`) in any chat to instantly count words, characters, paragraphs, and reading time!\n\n"
         "**Commands:**\n"
         "/start - Start the bot\n"
         "/help - How to use this bot"
@@ -33,10 +35,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(welcome_text, parse_mode="Markdown")
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    bot_username = context.bot.username
     help_text = (
         "📖 **How to Use Word Counter Bot:**\n\n"
         "1. **Direct Message:** Send or forward any message here for instant breakdown.\n"
-        "2. **Inline Mode:** Type `@{context.bot.username} <your text>` in any chat box to generate quick stats without leaving your conversation.\n\n"
+        f"2. **Inline Mode:** Type `@{bot_username} <your text>` in any chat box to generate quick stats without leaving your conversation.\n\n"
         "**Metrics Provided:**\n"
         "• Word & Character Count\n"
         "• Characters without spaces\n"
@@ -71,7 +74,7 @@ async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 title="Word Counter Bot",
                 description="Type text after your bot handle to count words...",
                 input_message_content=InputTextMessageContent(
-                    "Please type text after the bot handle to count words (e.g., @BotUsername Hello world)."
+                    f"Please type text after the bot handle to count words (e.g., @{context.bot.username} Hello world)."
                 )
             )
         ]
@@ -97,6 +100,13 @@ def main():
         logger.error("No BOT_TOKEN environment variable found!")
         return
 
+    # Explicitly set event loop to prevent RuntimeError on newer Python runtimes
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
     application = Application.builder().token(TOKEN).build()
 
     application.add_handler(CommandHandler("start", start))
@@ -109,3 +119,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
